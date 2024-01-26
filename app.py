@@ -13,7 +13,8 @@ import boto3
 from models import (
     db,
     connect_db,
-    Photo
+    Photo,
+    Postcard
 )
 
 load_dotenv()
@@ -34,6 +35,8 @@ s3 = boto3.client("s3")
 
 connect_db(app)
 
+
+################# PHOTOS #################
 
 @app.get("/api/photos")
 def get_all_photos():
@@ -95,8 +98,8 @@ def upload_photo():
 
     return jsonify(photo.serialize())
 
-@app.get("/api/photos/<int:id>")
-def get_photo(id):
+@app.get("/api/photos/<int:photo_id>")
+def get_photo(photo_id):
     """
     Get info on one photo. Returns JSON like:
 
@@ -109,9 +112,12 @@ def get_photo(id):
     }
     """
 
-    photo = Photo.query.get_or_404(id)
+    photo = Photo.query.get_or_404(photo_id)
     # TODO: More graceful handling of 404 -- make sure I'm sending back a JSON response.
     return jsonify(photo=photo.serialize())
+
+
+################# POSTCARDS #################
 
 
 @app.get("/api/postcards")
@@ -119,3 +125,41 @@ def get_all_postcards():
     """ get info on all postcards"""
 
     return jsonify("these are all the postcards")
+
+@app.post("/api/postcards")
+def create_postcard():
+    """Create a postcard
+
+    send json like:
+
+    {
+        title, message, photo_id
+    }
+    """
+
+    # TODO: Add sceme validation
+
+    title = request.json.get("title")
+    message = request.json.get("message")
+    photo_id = int(request.json.get("photo_id"))
+
+    # TODO: deal with location!
+
+    postcard = Postcard(
+        title=title,
+        message=message,
+        photo_id=photo_id
+    )
+
+    db.session.add(postcard)
+    db.session.commit()
+    return jsonify(postcard = postcard.serialize())
+
+
+@app.get("/api/postcards/<int:postcard_id>")
+def get_postcard(postcard_id):
+    """TODO: fix this docstring"""
+
+    postcard= Postcard.query.get_or_404(postcard_id)
+
+    return jsonify(postcard=postcard.serialize())

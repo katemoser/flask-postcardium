@@ -20,11 +20,15 @@ class Photo(db.Model):
         nullable=False,
     )
 
+    # TODO: where should I put my alt text -- photo or postcard?
+
     created_at = db.Column(
         db.DateTime,
         nullable=False,
         default=datetime.utcnow(),
     )
+
+    # postcards = relationship to postcards table
 
     def serialize(self):
         """return json serializable dict of data"""
@@ -34,6 +38,57 @@ class Photo(db.Model):
             "image_url": self.image_url,
             "created_at": self.created_at,
         }
+
+
+class Postcard(db.Model):
+    """Geolocated Photo and message, anonymously posted"""
+
+    __tablename__ = "postcards"
+
+    id = db.Column(
+        db.Integer,
+        primary_key=True,
+        autoincrement=True,
+    )
+
+    title = db.Column(
+        db.String(100),
+        nullable=False,
+    )
+
+    message = db.Column(
+        db.String(300),
+        nullable=False,
+    )
+
+    location = db.Column(
+        db.String,
+    )
+
+    created_at = db.Column(
+        db.DateTime,
+        nullable=False,
+        default=datetime.utcnow()
+    )
+
+    photo_id = db.Column(
+        db.Integer,
+        db.ForeignKey("photos.id"),
+        nullable=False,
+    )
+
+    photo = db.relationship("Photo", backref="postcard")
+
+    def serialize(self):
+        return {
+            "id": self.id,
+            "title": self.title,
+            "message": self.message,
+            "location": self.location,
+            "created_at": self.created_at,
+            "photo_id": self.photo_id,
+        }
+
 
 def connect_db(app):
     """Connect this database to provided Flask app.
