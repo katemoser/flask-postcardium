@@ -5,6 +5,7 @@ from dotenv import load_dotenv
 
 from flask import Flask, jsonify, request
 # from flask_debugtoolbar import DebugToolbarExtension
+from flask_cors import CORS
 
 from uuid import uuid4 as uuid
 
@@ -22,6 +23,7 @@ load_dotenv()
 BUCKET_NAME = os.environ["BUCKET_NAME"]
 
 app = Flask(__name__)
+CORS(app)
 
 # Configure app and db
 
@@ -87,8 +89,10 @@ def upload_photo():
         }
     )
 
+    image_url = f"https://{BUCKET_NAME}.s3.amazonaws.com/{file_name}"
+
     photo = Photo(
-        image_url=file_name
+        image_url=image_url
     )
 
     print("response:", response, "photo:", photo)
