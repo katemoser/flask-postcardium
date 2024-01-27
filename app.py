@@ -145,7 +145,7 @@ def create_postcard():
 
     title = request.json.get("title")
     message = request.json.get("message")
-    photo_id = int(request.json.get("photo_id"))
+    photo_id = int(request.json.get("photoId"))
 
     # TODO: deal with location!
 
