@@ -80,18 +80,20 @@ def upload_photo():
     file_obj = request.files['photo']
     file_name = str(uuid())
 
+    print("file obj before save:", file_obj)
     file_obj.filename = file_name
-    file_obj.save(file_name)
-    # TODO: find a way to save this in a temporary file
-    # https://docs.python.org/3/library/tempfile.html
+    file_obj.save(file_obj.filename)
+    print("file obj after save:", file_obj)
+    # # TODO: find a way to save this in a temporary file
+    # # https://docs.python.org/3/library/tempfile.html
 
     location, latitude, longitude = Photo.get_location(file_obj.filename)
-    # print("lat:", latitude, "long:", longitude)
+    print("lat:", latitude, "long:", longitude)
 
-    breakpoint()
+    # breakpoint()
     # TODO: refactor to model!
-    response = s3.upload_fileobj(
-        file_obj,
+    response = s3.upload_file(
+        file_name,
         BUCKET_NAME,
         file_name,
         ExtraArgs={
@@ -99,7 +101,7 @@ def upload_photo():
         }
     )
 
-    image_url = f"https://{BUCKET_NAME}.s3.amazonaws.com/{file_name}.jpg"
+    image_url = f"https://{BUCKET_NAME}.s3.amazonaws.com/{file_obj.filename}"
 
     photo = Photo(
         image_url=image_url,

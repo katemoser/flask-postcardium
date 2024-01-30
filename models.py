@@ -127,14 +127,15 @@ class Postcard(db.Model):
 
     def serialize(self):
         photo_url = self.photo.image_url
+        location = self.photo.location
         return {
             "id": self.id,
             "title": self.title,
             "message": self.message,
-            "location": self.location,
+            "location": location,
             "created_at": self.created_at,
             "photo_id": self.photo_id,
-            "photo_url": photo_url
+            "photo_url": photo_url,
         }
 
 
