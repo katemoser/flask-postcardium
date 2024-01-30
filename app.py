@@ -85,8 +85,8 @@ def upload_photo():
     # TODO: find a way to save this in a temporary file
     # https://docs.python.org/3/library/tempfile.html
 
-    latitude, longitude = Photo.get_location(file_obj.filename)
-    print("lat:", latitude, "long:", longitude)
+    location, latitude, longitude = Photo.get_location(file_obj.filename)
+    # print("lat:", latitude, "long:", longitude)
 
     breakpoint()
     # TODO: refactor to model!
@@ -105,6 +105,7 @@ def upload_photo():
         image_url=image_url,
         latitude=latitude,
         longitude=longitude,
+        location=location
     )
 
     print("response:", response, "photo:", photo)

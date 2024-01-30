@@ -7,6 +7,9 @@ from flask_sqlalchemy import SQLAlchemy
 # from PIL.ExifTags import TAGS, GPSTAGS
 
 from GPSPhoto import gpsphoto
+from geopy.geocoders import Nominatim
+
+geolocator = Nominatim(user_agent="postcardium")
 
 db = SQLAlchemy()
 
@@ -33,6 +36,10 @@ class Photo(db.Model):
         db.String(50),
     )
 
+    location = db.Column(
+        db.String(100),
+    )
+
     # TODO: where should I put my alt text -- photo or postcard?
 
     created_at = db.Column(
@@ -51,7 +58,19 @@ class Photo(db.Model):
         print("DATA:", data)
         latitude = data.get("Latitude")
         longitude = data.get("Longitude")
-        return (latitude, longitude)
+
+        # TODO: if there is no lat/long, don't try and look up a location
+        if not latitude or not longitude:
+            location = None
+        else:
+            location = geolocator.reverse(f"{latitude},{longitude}")
+            address = location.raw['address']
+            print("address:", address)
+            city = address.get("city", "Somewhere")
+            state = address.get("state", "Somewhere")
+            country = address.get("country", "Somewhere")
+            location = f"{city}, {state}, {country}"
+        return (location, latitude, longitude)
 
 
     def serialize(self):
@@ -62,7 +81,8 @@ class Photo(db.Model):
             "image_url": self.image_url,
             "created_at": self.created_at,
             "latitude": self.latitude,
-            "longitude": self.longitude
+            "longitude": self.longitude,
+            "location": self.location
         }
 
 
