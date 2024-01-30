@@ -3,6 +3,11 @@
 from datetime import datetime
 from flask_sqlalchemy import SQLAlchemy
 
+# from PIL import Image
+# from PIL.ExifTags import TAGS, GPSTAGS
+
+from GPSPhoto import gpsphoto
+
 db = SQLAlchemy()
 
 class Photo(db.Model):
@@ -20,6 +25,14 @@ class Photo(db.Model):
         nullable=False,
     )
 
+    latitude = db.Column(
+        db.String(50),
+    )
+
+    longitude = db.Column(
+        db.String(50),
+    )
+
     # TODO: where should I put my alt text -- photo or postcard?
 
     created_at = db.Column(
@@ -30,6 +43,17 @@ class Photo(db.Model):
 
     # postcards = relationship to postcards table
 
+    @classmethod
+    def get_location(cls, file_path):
+        """get location data off file"""
+
+        data = gpsphoto.getGPSData(file_path)
+        print("DATA:", data)
+        latitude = data.get("Latitude")
+        longitude = data.get("Longitude")
+        return (latitude, longitude)
+
+
     def serialize(self):
         """return json serializable dict of data"""
 
@@ -37,6 +61,8 @@ class Photo(db.Model):
             "id": self.id,
             "image_url": self.image_url,
             "created_at": self.created_at,
+            "latitude": self.latitude,
+            "longitude": self.longitude
         }
 
 
@@ -80,6 +106,7 @@ class Postcard(db.Model):
     photo = db.relationship("Photo", backref="postcard")
 
     def serialize(self):
+        photo_url = self.photo.image_url
         return {
             "id": self.id,
             "title": self.title,
@@ -87,6 +114,7 @@ class Postcard(db.Model):
             "location": self.location,
             "created_at": self.created_at,
             "photo_id": self.photo_id,
+            "photo_url": photo_url
         }
 
 

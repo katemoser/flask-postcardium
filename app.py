@@ -80,6 +80,16 @@ def upload_photo():
     file_obj = request.files['photo']
     file_name = str(uuid())
 
+    file_obj.filename = file_name
+    file_obj.save(file_name)
+    # TODO: find a way to save this in a temporary file
+    # https://docs.python.org/3/library/tempfile.html
+
+    latitude, longitude = Photo.get_location(file_obj.filename)
+    print("lat:", latitude, "long:", longitude)
+
+    breakpoint()
+    # TODO: refactor to model!
     response = s3.upload_fileobj(
         file_obj,
         BUCKET_NAME,
@@ -89,10 +99,12 @@ def upload_photo():
         }
     )
 
-    image_url = f"https://{BUCKET_NAME}.s3.amazonaws.com/{file_name}"
+    image_url = f"https://{BUCKET_NAME}.s3.amazonaws.com/{file_name}.jpg"
 
     photo = Photo(
-        image_url=image_url
+        image_url=image_url,
+        latitude=latitude,
+        longitude=longitude,
     )
 
     print("response:", response, "photo:", photo)
@@ -121,6 +133,8 @@ def get_photo(photo_id):
     return jsonify(photo=photo.serialize())
 
 
+
+
 ################# POSTCARDS #################
 
 
@@ -128,7 +142,11 @@ def get_photo(photo_id):
 def get_all_postcards():
     """ get info on all postcards"""
 
-    return jsonify("these are all the postcards")
+    postcards = Postcard.query.all()
+
+    serialized = [p.serialize() for p in postcards]
+
+    return jsonify(postcards=serialized)
 
 @app.post("/api/postcards")
 def create_postcard():
