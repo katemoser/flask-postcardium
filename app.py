@@ -63,10 +63,35 @@ def get_all_photos():
     return jsonify(photos=serialized)
 
 
+@app.post("/api/photos/exif")
+def store_locally_get_gps_data():
+    """save file locally and get exif data to return"""
+
+    file_obj = request.files['photo']
+    file_name = str(uuid())
+
+    # print("file obj before save:", file_obj)
+    file_obj.filename = file_name
+    file_obj.save(file_obj.filename)
+    # print("file obj after save:", file_obj)
+    # # TODO: find a way to save this in a temporary file
+    # # https://docs.python.org/3/library/tempfile.html
+
+    city, state, country = Photo.get_location(file_obj.filename)
+    print("city, state, country", city, state, country)
+
+    return jsonify(
+        city=city,
+        state=state,
+        country=country,
+        file_name=file_name
+    )
+
+
 @app.post("/api/photos")
 def upload_photo():
     """
-    Upload a fileobj to s3 and create photo resource. Returns JSON like:
+    Upload a locally stored file and create photo resource. Returns JSON like:
 
     {
         "photo": {
@@ -76,21 +101,15 @@ def upload_photo():
         }
     }
     """
+    print("IN UPLOAD PHOTO request:", request)
 
-    file_obj = request.files['photo']
-    file_name = str(uuid())
+    breakpoint()
+    file_name = request.json.get("file_name")
+    city = request.json.get("city")
+    state = request.json.get("state")
+    country = request.json.get("country")
 
-    print("file obj before save:", file_obj)
-    file_obj.filename = file_name
-    file_obj.save(file_obj.filename)
-    print("file obj after save:", file_obj)
-    # # TODO: find a way to save this in a temporary file
-    # # https://docs.python.org/3/library/tempfile.html
-
-    location, latitude, longitude = Photo.get_location(file_obj.filename)
-    print("lat:", latitude, "long:", longitude)
-
-    # breakpoint()
+    breakpoint()
     # TODO: refactor to model!
     response = s3.upload_file(
         file_name,
@@ -101,13 +120,13 @@ def upload_photo():
         }
     )
 
-    image_url = f"https://{BUCKET_NAME}.s3.amazonaws.com/{file_obj.filename}"
+    image_url = f"https://{BUCKET_NAME}.s3.amazonaws.com/{file_name}"
 
     photo = Photo(
         image_url=image_url,
-        latitude=latitude,
-        longitude=longitude,
-        location=location
+        city=city,
+        state=state,
+        country=country
     )
 
     print("response:", response, "photo:", photo)
@@ -115,7 +134,7 @@ def upload_photo():
     db.session.add(photo)
     db.session.commit()
 
-    return jsonify(photo.serialize())
+    return jsonify(photo=photo.serialize())
 
 @app.get("/api/photos/<int:photo_id>")
 def get_photo(photo_id):
