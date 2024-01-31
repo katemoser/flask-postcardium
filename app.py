@@ -103,13 +103,11 @@ def upload_photo():
     """
     print("IN UPLOAD PHOTO request:", request)
 
-    breakpoint()
     file_name = request.json.get("file_name")
     city = request.json.get("city")
     state = request.json.get("state")
     country = request.json.get("country")
 
-    breakpoint()
     # TODO: refactor to model!
     response = s3.upload_file(
         file_name,
@@ -183,14 +181,12 @@ def create_postcard():
 
     # TODO: Add sceme validation
 
-    title = request.json.get("title")
     message = request.json.get("message")
     photo_id = int(request.json.get("photoId"))
 
     # TODO: deal with location!
 
     postcard = Postcard(
-        title=title,
         message=message,
         photo_id=photo_id
     )

@@ -109,11 +109,6 @@ class Postcard(db.Model):
         autoincrement=True,
     )
 
-    title = db.Column(
-        db.String(100),
-        nullable=False,
-    )
-
     message = db.Column(
         db.String(300),
         nullable=False,
@@ -139,7 +134,6 @@ class Postcard(db.Model):
         location = self.photo.city
         return {
             "id": self.id,
-            "title": self.title,
             "message": self.message,
             "location": location,
             "created_at": self.created_at,
