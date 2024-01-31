@@ -28,17 +28,28 @@ class Photo(db.Model):
         nullable=False,
     )
 
-    latitude = db.Column(
-        db.String(50),
+    city = db.Column(
+        db.String(100)
     )
 
-    longitude = db.Column(
-        db.String(50),
+    state = db.Column(
+        db.String(100)
     )
 
-    location = db.Column(
-        db.String(100),
+    country = db.Column(
+        db.String(100)
     )
+    # latitude = db.Column(
+    #     db.String(50),
+    # )
+
+    # longitude = db.Column(
+    #     db.String(50),
+    # )
+
+    # location = db.Column(
+    #     db.String(100),
+    # )
 
     # TODO: where should I put my alt text -- photo or postcard?
 
@@ -52,7 +63,7 @@ class Photo(db.Model):
 
     @classmethod
     def get_location(cls, file_path):
-        """get location data off file"""
+        """get location data off file returns tuple of (city, state, country)"""
 
         data = gpsphoto.getGPSData(file_path)
         print("DATA:", data)
@@ -61,16 +72,17 @@ class Photo(db.Model):
 
         # TODO: if there is no lat/long, don't try and look up a location
         if not latitude or not longitude:
-            location = None
+            city = None
+            state = None
+            country = None
         else:
             location = geolocator.reverse(f"{latitude},{longitude}")
             address = location.raw['address']
             print("address:", address)
-            city = address.get("city", "Somewhere")
-            state = address.get("state", "Somewhere")
-            country = address.get("country", "Somewhere")
-            location = f"{city}, {state}, {country}"
-        return (location, latitude, longitude)
+            city = address.get("city")
+            state = address.get("state")
+            country = address.get("country")
+        return (city, state, country)
 
 
     def serialize(self):
@@ -80,9 +92,9 @@ class Photo(db.Model):
             "id": self.id,
             "image_url": self.image_url,
             "created_at": self.created_at,
-            "latitude": self.latitude,
-            "longitude": self.longitude,
-            "location": self.location
+            "city": self.city,
+            "state": self.state,
+            "country": self.country
         }
 
 
@@ -107,10 +119,6 @@ class Postcard(db.Model):
         nullable=False,
     )
 
-    location = db.Column(
-        db.String,
-    )
-
     created_at = db.Column(
         db.DateTime,
         nullable=False,
@@ -125,9 +133,10 @@ class Postcard(db.Model):
 
     photo = db.relationship("Photo", backref="postcard")
 
+    # add prop func to make location
     def serialize(self):
         photo_url = self.photo.image_url
-        location = self.photo.location
+        location = self.photo.city
         return {
             "id": self.id,
             "title": self.title,
