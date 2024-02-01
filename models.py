@@ -39,13 +39,14 @@ class Photo(db.Model):
     country = db.Column(
         db.String(100)
     )
-    # latitude = db.Column(
-    #     db.String(50),
-    # )
 
-    # longitude = db.Column(
-    #     db.String(50),
-    # )
+    latitude = db.Column(
+        db.String(50),
+    )
+
+    longitude = db.Column(
+        db.String(50),
+    )
 
     # location = db.Column(
     #     db.String(100),
@@ -62,7 +63,7 @@ class Photo(db.Model):
     # postcards = relationship to postcards table
 
     @classmethod
-    def get_location(cls, file_path):
+    def get_location_from_file(cls, file_path):
         """get location data off file returns tuple of (city, state, country)"""
 
         data = gpsphoto.getGPSData(file_path)
@@ -78,11 +79,28 @@ class Photo(db.Model):
         else:
             location = geolocator.reverse(f"{latitude},{longitude}")
             address = location.raw['address']
-            print("address:", address)
             city = address.get("city")
             state = address.get("state")
             country = address.get("country")
-        return (city, state, country)
+        return ({
+            "city": city,
+            "state": state,
+            "country": country,
+            "latitude": latitude,
+            "longitude": longitude})
+
+    @classmethod
+    def get_lat_long_from_address(cls, address):
+        """
+        takes string address, returns lat and long
+
+        address can be a dict like {city, state, country}
+            OR a string like "city, state, country"
+        """
+
+        location = geolocator.geocode(address)
+        # breakpoint()
+        return (location.latitude, location.longitude)
 
 
     def serialize(self):
@@ -94,7 +112,9 @@ class Photo(db.Model):
             "created_at": self.created_at,
             "city": self.city,
             "state": self.state,
-            "country": self.country
+            "country": self.country,
+            "latitude": self.latitude,
+            "longitude": self.longitude
         }
 
 
@@ -132,6 +152,7 @@ class Postcard(db.Model):
     def serialize(self):
         photo_url = self.photo.image_url
         location = self.photo.city
+        coords = [self.photo.latitude, self.photo.longitude]
         return {
             "id": self.id,
             "message": self.message,
@@ -139,6 +160,7 @@ class Postcard(db.Model):
             "created_at": self.created_at,
             "photo_id": self.photo_id,
             "photo_url": photo_url,
+            "coords": coords
         }
 
 

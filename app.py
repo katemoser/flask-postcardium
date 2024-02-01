@@ -70,22 +70,19 @@ def store_locally_get_gps_data():
     file_obj = request.files['photo']
     file_name = str(uuid())
 
-    # print("file obj before save:", file_obj)
     file_obj.filename = file_name
+    # save to disk with new uuid as name
     file_obj.save(file_obj.filename)
     # print("file obj after save:", file_obj)
     # # TODO: find a way to save this in a temporary file
     # # https://docs.python.org/3/library/tempfile.html
 
-    city, state, country = Photo.get_location(file_obj.filename)
-    print("city, state, country", city, state, country)
-
-    return jsonify(
-        city=city,
-        state=state,
-        country=country,
-        file_name=file_name
-    )
+    location_data = Photo.get_location_from_file(file_obj.filename)
+    # print("city, state, country", city, state, country)
+    # add file name to dict for reference
+    location_data["file_name"] = file_name
+    # breakpoint()
+    return jsonify(location_data)
 
 
 @app.post("/api/photos")
@@ -107,6 +104,18 @@ def upload_photo():
     city = request.json.get("city")
     state = request.json.get("state")
     country = request.json.get("country")
+    latitude = request.json.get("latitude")
+    longitude = request.json.get("longitude")
+
+    if(not latitude or not longitude):
+        address = {
+            "city": city,
+            "state": state,
+            "country": country
+        }
+        location = Photo.get_lat_long_from_address(address)
+        latitude = location[0]
+        longitude = location[1]
 
     # TODO: refactor to model!
     response = s3.upload_file(
@@ -124,7 +133,9 @@ def upload_photo():
         image_url=image_url,
         city=city,
         state=state,
-        country=country
+        country=country,
+        latitude=latitude,
+        longitude=longitude
     )
 
     print("response:", response, "photo:", photo)
