@@ -97,6 +97,10 @@ class Photo(db.Model):
         address can be a dict like {city, state, country}
             OR a string like "city, state, country"
         """
+        # breakpoint()
+
+        if(isinstance(address, dict)):
+            address = f"{address['city']}, {address['state']}, {address['country']}"
 
         location = geolocator.geocode(address)
         # breakpoint()
